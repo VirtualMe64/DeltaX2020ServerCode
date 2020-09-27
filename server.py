@@ -105,7 +105,7 @@ with SimpleXMLRPCServer(('localhost', 9090),
 
     def predGood(data):
         obj = np.array([data])
-        obj = scaler.transform(obj.reshape(-1,4))
+        obj = goodScaler.transform(obj.reshape(-1,5))
         return goodModel.predict(obj)
 
     def predictGood():
@@ -113,37 +113,19 @@ with SimpleXMLRPCServer(('localhost', 9090),
         yPreds = []
         yTrues = []
         print("predicting many")
-        dataframe = pd.DataFrame(columns=['stockDate', 'casesDate', 'stock', 'prevDayStock', 'newCases', 'newDeaths', 'totalCases', 'totalDeaths'])
-        stockDates = list(stockDF.index)
-        newCasesDates = list(newCases.index)
-        newDeathsDates = list(newDeaths.index)
-        totalCasesDates = list(totalCases.index)
-        totalDeathsDates = list(totalDeaths.index)
-        dateLists = [newCasesDates, newDeathsDates, totalCasesDates, totalDeathsDates]
-        for dateStr in newCasesDates:
-        dateParts = [int(part) for part in dateStr.split('-')]
-        date = datetime.datetime(dateParts[0], dateParts[1], dateParts[2])
-        nextDay = date + datetime.timedelta(days = 1)
-        nextDayStr = str(nextDay.year) + '-' + str(nextDay.month).zfill(2) + '-' + str(nextDay.day).zfill(2)
-        if all([dateStr in lists for lists in dateLists]) and nextDayStr in stockDates:
-            prevStockDay = prevStockMarketDay(nextDayStr)
-            if prevStockDay in stockDates:
-                new_row = {'stockDate':nextDayStr, 'casesDate':dateStr, 'stock':stockDF['Close'][nextDayStr], 'prevDayStock':stockDF['Close'][prevStockDay], 'newCases':newCases['United States'][dateStr], 'newDeaths':newDeaths['United States'][dateStr],'totalCases':totalCases['United States'][dateStr], 'totalDeaths':totalDeaths['United States'][dateStr]}
-                dataframe = dataframe.append(new_row, ignore_index=True)
+
         for date, price in stockDF['Close'].iteritems():
-            x.append(date)
-            yTrues.append(price)
             prevDay = incrementDateStr(date, -1)
-            data = [newCases['United States'][prevDay], newDeaths['United States'][prevDay], totalCases['United States'][prevDay], totalDeaths['United States'][prevDay], ]
+            prevStockDay = prevStockMarketDay(date)
+            if prevStockDay == -1:
+                continue
+            x.append(date)
+            yTrues.append(price)        
+            data = [stockDF['Close'][prevStockDay], newCases['United States'][prevDay], newDeaths['United States'][prevDay], totalCases['United States'][prevDay], totalDeaths['United States'][prevDay]]
             prediction = predGood(data)
-            yPreds.append(prediction[0][0].item())
-            #print(f"{date}: {data}. Prediction: {prediction[0][0]}, Actual: {price}")
-        
-        data = [x, yPreds, yTrues]
-        print(json.dumps(data))
-        
-        
-        print(data)
+            yPreds.append(prediction[0][0])
+            print(f"{date}: {data}. Prediction: {prediction[0][0]}, Actual: {price}")
+            print(data)
 
         return data
     server.register_function(predictGood, 'predictGood')
