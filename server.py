@@ -77,10 +77,8 @@ with SimpleXMLRPCServer(('localhost', 9090),
     def predictCurrentGood(date):
         prevDay = incrementDateStr(date, -1)
         prevStockDay = prevStockMarketDay(date)
-        if prevStockDay == -1:
-            continue
         obj = np.array([[stockDF['Close'][prevStockDay], newCases['United States'][prevDay], newDeaths['United States'][prevDay], totalCases['United States'][prevDay], totalDeaths['United States'][prevDay]]])
-        obj = goodScaler.transform(obj.reshape(-1,4))
+        obj = goodScaler.transform(obj.reshape(-1,5))
         prediction = goodModel.predict(obj)
         print(prediction[0][0].item())
         return prediction[0][0].item()
