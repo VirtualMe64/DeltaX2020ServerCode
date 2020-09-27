@@ -11,7 +11,7 @@ import json
 from io import StringIO
 
 modelPath = "output_model.h5"
-goodModelPath = "modelBestAttempt.h5"
+goodModelPath = "modelBestAttemptStockData.h5"
 goodScaler = "scalerGood.save"
 scaler = joblib.load("scaler.save") 
 dataDir = "data/"
@@ -123,10 +123,11 @@ with SimpleXMLRPCServer(('localhost', 9090),
             yTrues.append(price)        
             data = [stockDF['Close'][prevStockDay], newCases['United States'][prevDay], newDeaths['United States'][prevDay], totalCases['United States'][prevDay], totalDeaths['United States'][prevDay]]
             prediction = predGood(data)
-            yPreds.append(prediction[0][0])
+            yPreds.append(prediction[0][0].item())
             print(f"{date}: {data}. Prediction: {prediction[0][0]}, Actual: {price}")
             print(data)
 
+        data = [x, yPreds, yTrues]
         return data
     server.register_function(predictGood, 'predictGood')
     
