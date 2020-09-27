@@ -7,6 +7,8 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
 import pandas as pd
 import datetime
+import json
+from io import StringIO
 
 modelPath = "output_model.h5"
 scaler = joblib.load("scaler.save") 
@@ -54,10 +56,37 @@ with SimpleXMLRPCServer(('localhost', 9090),
         prediction = model.predict(obj)
         print(prediction[0][0].item())
         return prediction[0][0].item()
-
+        
     predict("2020-9-26")
     server.register_function(predict, 'predict')
 
+    def pred(data):
+        obj = np.array([data])
+        obj = scaler.transform(obj.reshape(-1,4))
+        return model.predict(obj)
+
+    def predictMany():
+        x = []
+        yPreds = []
+        yTrues = []
+        print("predicting many")
+        for date, price in stockDF['Close'].iteritems():
+            x.append(date)
+            yTrues.append(price)
+            prevDay = incrementDateStr(date, -1)
+            data = [newCases['United States'][prevDay], newDeaths['United States'][prevDay], totalCases['United States'][prevDay], totalDeaths['United States'][prevDay]]
+            prediction = pred(data)
+            yPreds.append(prediction[0][0].item())
+            #print(f"{date}: {data}. Prediction: {prediction[0][0]}, Actual: {price}")
+        
+        data = [x, yPreds, yTrues]
+        print(json.dumps(data))
+        
+        
+        print(data)
+
+        return data
+    server.register_function(predictMany, 'predictMany')
     
 
     # Run the server's main loop
