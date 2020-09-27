@@ -40,7 +40,7 @@ class RequestHandler(SimpleXMLRPCRequestHandler):
         SimpleXMLRPCRequestHandler.end_headers(self)
 
 # Create server
-with SimpleXMLRPCServer(('localhost', 8000),
+with SimpleXMLRPCServer(('localhost', 9090),
                         requestHandler=RequestHandler) as server:
     server.register_introspection_functions()
 
@@ -52,8 +52,8 @@ with SimpleXMLRPCServer(('localhost', 8000),
         obj = np.array([[newCases['United States'][prevDay], newDeaths['United States'][prevDay], totalCases['United States'][prevDay], totalDeaths['United States'][prevDay]]])
         obj = scaler.transform(obj.reshape(-1,4))
         prediction = model.predict(obj)
-        print(prediction)
-        return prediction[0][0]
+        print(prediction[0][0].item())
+        return prediction[0][0].item()
 
     predict("2020-9-26")
     server.register_function(predict, 'predict')
